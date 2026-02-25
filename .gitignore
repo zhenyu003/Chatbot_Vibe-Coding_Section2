@@ -22,3 +22,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# user-downloaded channel data (keep veritasium sample)
+/public/channel_data_*.json

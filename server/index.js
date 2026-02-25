@@ -3,6 +3,9 @@ const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+const { fetchChannelVideos } = require('./youtubeFetcher');
 
 const app = express();
 app.use(cors());
@@ -14,7 +17,12 @@ const DB = 'chatapp';
 let db;
 
 async function connect() {
-  const client = await MongoClient.connect(URI);
+  const options = {
+    serverSelectionTimeoutMS: 10000,
+    // Avoids TLS "internal error" with some Node/OpenSSL versions (e.g. Node 24)
+    tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
+  };
+  const client = await MongoClient.connect(URI, options);
   db = client.db(DB);
   console.log('MongoDB connected');
 }
@@ -47,7 +55,7 @@ app.get('/api/status', async (req, res) => {
 
 app.post('/api/users', async (req, res) => {
   try {
-    const { username, password, email } = req.body;
+    const { username, password, email, firstName, lastName } = req.body;
     if (!username || !password)
       return res.status(400).json({ error: 'Username and password required' });
     const name = String(username).trim().toLowerCase();
@@ -58,6 +66,8 @@ app.post('/api/users', async (req, res) => {
       username: name,
       password: hashed,
       email: email ? String(email).trim().toLowerCase() : null,
+      firstName: firstName ? String(firstName).trim() : null,
+      lastName: lastName ? String(lastName).trim() : null,
       createdAt: new Date().toISOString(),
     });
     res.json({ ok: true });
@@ -76,7 +86,12 @@ app.post('/api/users/login', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'User not found' });
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'Invalid password' });
-    res.json({ ok: true, username: name });
+    res.json({
+      ok: true,
+      username: name,
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -172,6 +187,37 @@ app.post('/api/messages', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── YouTube Channel Data ─────────────────────────────────────────────────────
+
+app.post('/api/youtube/channel', async (req, res) => {
+  const { url, maxVideos = 10 } = req.body;
+  if (!url || typeof url !== 'string') return res.status(400).json({ error: 'url required' });
+  const max = Math.min(100, Math.max(1, parseInt(maxVideos, 10) || 10));
+
+  res.setHeader('Content-Type', 'application/x-ndjson');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const send = (obj) => res.write(JSON.stringify(obj) + '\n');
+
+  try {
+    const onProgress = (current, total) => send({ type: 'progress', current, total });
+    const data = await fetchChannelVideos(url.trim(), max, onProgress);
+    send({ type: 'complete', data });
+  } catch (err) {
+    send({ type: 'error', error: err.message });
+  } finally {
+    res.end();
+  }
+});
+
+// Serve pre-downloaded Veritasium sample (in public folder)
+app.get('/api/youtube/sample', (req, res) => {
+  const samplePath = path.join(__dirname, '..', 'public', 'veritasium_channel_data.json');
+  if (!fs.existsSync(samplePath)) return res.status(404).json({ error: 'Sample not found' });
+  res.sendFile(samplePath);
 });
 
 app.get('/api/messages', async (req, res) => {

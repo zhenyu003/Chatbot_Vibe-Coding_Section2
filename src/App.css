@@ -5,3 +5,41 @@
 .App {
   min-height: 100vh;
 }
+
+.app-authenticated {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0f0f23;
+}
+
+.app-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.app-tabs button {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.app-tabs button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.app-tabs button.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}

@@ -2,7 +2,7 @@
 
 .chat-layout {
   display: flex;
-  height: 100vh;
+  height: 100%;
   width: 100%;
   overflow: hidden;
 }
@@ -310,6 +310,7 @@
 }
 
 .chat-msg.model {
+  max-width: 90%;
   margin-top: 0.25rem;
   background: rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(12px);
@@ -571,6 +572,16 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+}
+
+.file-error-banner {
+  padding: 0.45rem 0.85rem;
+  margin-bottom: 0.5rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.82rem;
 }
 
 .chat-input-row {

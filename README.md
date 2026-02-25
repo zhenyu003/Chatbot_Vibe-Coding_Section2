@@ -1,13 +1,15 @@
-# Chat App
+# Lisa — YouTube & Social Media Analysis Chatbot
 
-A React chatbot with Gemini AI, user auth, MongoDB persistence, and client-side data analysis. Glassmorphism UI with streaming responses, CSV upload, code execution, and interactive charts.
+A React chatbot powered by Gemini AI with a custom persona (Lisa from BLACKPINK), user auth, MongoDB persistence, and two analysis modes: **YouTube channel analysis** and **social media CSV analysis**. Glassmorphism UI with streaming responses, interactive charts, video playback cards, and AI image generation.
+
+Built for the course *Generative AI and Social Media* at Yale School of Management (Prof. Tauhid Zaman).
 
 ## How It Works
 
-- **Frontend (React)** – Login/create account, chat UI with streaming, drag-and-drop CSV/images, Recharts bar charts
-- **Backend (Express)** – REST API for users and sessions, connects to MongoDB
-- **AI (Gemini)** – Streaming chat, Google Search grounding, Python code execution, and function calling for client-side tools
-- **Storage (MongoDB)** – Users and chat sessions stored in `chatapp` database
+- **Frontend (React)** – Login/create account, two-tab UI (Chat + YouTube Channel Download), drag-and-drop CSV/JSON/images, streaming responses, interactive Recharts line charts
+- **Backend (Express)** – REST API for users/sessions (MongoDB) and a YouTube data fetcher that downloads full channel metadata + transcripts
+- **AI (Gemini 2.0 Flash)** – Streaming chat with Google Search grounding, Python code execution, and function calling for client-side tools. Imagen 3/4 for image generation.
+- **Storage (MongoDB)** – Users and chat sessions (including tool call logs and chart payloads) stored in `chatapp` database
 
 ## API Keys & Environment Variables
 
@@ -187,10 +189,11 @@ All packages are installed via `npm install`. Key dependencies:
 |---------|---------|
 | `react`, `react-dom` | UI framework |
 | `react-scripts` | Create React App build tooling |
-| `@google/generative-ai` | Gemini API client (chat, function calling, code execution, search grounding) |
+| `@google/generative-ai` | Gemini API client (streaming chat, function calling, code execution, search grounding) |
+| `@google/genai` | Newer Google AI SDK used for Imagen image generation |
 | `react-markdown` | Render markdown in AI responses |
 | `remark-gfm` | GitHub-flavored markdown (tables, strikethrough, etc.) |
-| `recharts` | Interactive charts (available for future visualizations) |
+| `recharts` | Interactive line charts for YouTube metric visualization |
 
 ### Backend
 
@@ -201,6 +204,8 @@ All packages are installed via `npm install`. Key dependencies:
 | `bcryptjs` | Password hashing |
 | `cors` | Cross-origin request headers |
 | `dotenv` | Load `.env` variables |
+| `youtubei.js` | Fetch YouTube channel video metadata (no API key required) |
+| `youtube-transcript` | Download video transcripts |
 
 ### Dev / Tooling
 
@@ -212,20 +217,44 @@ All packages are installed via `npm install`. Key dependencies:
 
 ## Features
 
+### Core
 - **Create account / Login** – Username + password, hashed with bcrypt
 - **Session-based chat history** – Each conversation is a separate session; sidebar lists all chats with delete option
 - **Streaming Gemini responses** – Text streams in real time with animated "..." while thinking; Stop button to cancel
 - **Google Search grounding** – Answers include cited web sources for factual queries
-- **Python code execution** – Gemini writes and runs Python for plots, regression, histogram, scatter, and any analysis the JS tools can't handle
-- **CSV upload** – Drag-and-drop or click to attach a CSV; a slim version of the data (key columns as plain text) plus a full statistical summary are sent to Gemini automatically
-- **Auto-computed engagement column** – When a CSV has `Favorite Count` and `View Count` columns, an `engagement` ratio (Favorite Count / View Count) is added automatically to every row
-- **Client-side data analysis tools** – Fast, zero-cost function-calling tools that run in the browser. Gemini calls these automatically for data questions; results are saved to MongoDB alongside the message:
-  - `compute_column_stats(column)` – mean, median, std, min, max, count for any numeric column
-  - `get_value_counts(column, top_n)` – frequency count of each unique value in a categorical column
-  - `get_top_tweets(sort_column, n, ascending)` – top or bottom N tweets sorted by any metric (including `engagement`), with tweet text and key metrics
-- **Tool routing logic** – The app automatically routes requests: client-side JS tools for simple stats, Python code execution for plots and complex models, Google Search for factual queries
 - **Markdown rendering** – AI responses render headers, lists, code blocks, tables, and links
 - **Image support** – Attach images via drag-and-drop, the 📎 button, or paste from clipboard (Ctrl+V)
+
+### YouTube Channel Analysis (Chat tab — load a `.json` file from the YouTube tab)
+The JSON must have the structure `{ channel_name, videos: [{ title, view_count, like_count, comment_count, duration, release_date, video_url, thumbnail_url, transcript }] }`.
+
+- **Plot metric vs time** – Ask "plot view_count" or "show me the duration chart". Renders an interactive line chart (click to enlarge, download as PNG). Only fields with actual data in the JSON are offered as options.
+- **Play a video** – Ask "play the most viewed video" or "open the asbestos video". Displays a clickable card with thumbnail that opens YouTube in a new tab.
+- **Compute stats** – Ask "what's the average view count?" or "show stats for duration". Returns mean, median, std, min, max.
+- **AI image generation** – Ask "generate a thumbnail for a video about black holes". Uses Google Imagen 3/4 to create an image displayed in chat. You can drag in a reference image for style guidance.
+- **Natural language analysis** – Ask anything about the channel; Lisa reads the video list and answers from context, calling tools when a visual or structured result is needed.
+
+### YouTube Channel Download (separate tab)
+Enter a YouTube channel URL to download all video metadata and transcripts (no API key required — uses `youtubei.js`). Saves a `.json` file ready to load in the Chat tab.
+
+### Social Media CSV Analysis (Chat tab — attach a `.csv` file)
+- **CSV upload** – Drag-and-drop or click 📎 to attach; key columns plus a statistical summary are sent to Gemini automatically
+- **Auto-computed engagement column** – When a CSV has `Favorite Count` and `View Count` columns, `engagement = Favorite Count / View Count` is added automatically
+- **Client-side data tools** – Fast, zero-cost function-calling tools that run in the browser:
+  - `compute_column_stats(column)` – mean, median, std, min, max for any numeric column
+  - `get_value_counts(column, top_n)` – frequency count of each unique value in a categorical column
+  - `get_top_tweets(sort_column, n, ascending)` – top/bottom N rows sorted by any metric
+- **Python code execution** – Gemini writes and runs Python for scatter plots, regression, histograms, heatmaps, and any analysis the JS tools can't handle
+
+### Smart Routing
+The app automatically picks the right path for each message:
+| Condition | Mode |
+|-----------|------|
+| YouTube JSON loaded | YouTube function-calling tools |
+| CSV loaded, simple stats | Client-side JS tools (no API cost) |
+| CSV loaded, needs a plot | Python code execution via Gemini |
+| No file, factual question | Google Search grounding |
+| No file, any other question | Streaming chat |
 
 ## Chat System Prompt
 

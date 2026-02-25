@@ -1,0 +1,86 @@
+.generated-img-wrap {
+  margin: 0.75rem 0;
+  display: inline-block;
+}
+
+.generated-img {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.generated-img:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.generated-img-download-btn {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(129, 140, 248, 0.3);
+  border: 1px solid rgba(129, 140, 248, 0.5);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.generated-img-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.generated-img-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.generated-img-modal {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.generated-img-download {
+  position: absolute;
+  top: -2.5rem;
+  right: 2.5rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(129, 140, 248, 0.3);
+  border: 1px solid rgba(129, 140, 248, 0.5);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.generated-img-close {
+  position: absolute;
+  top: -2.5rem;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.generated-img-enlarged {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
